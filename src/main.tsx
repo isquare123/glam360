@@ -1,9 +1,9 @@
 import React,{useEffect,useMemo,useState} from "react";
 import {createRoot} from "react-dom/client";
 import {createClient} from "@supabase/supabase-js";
-import {Search,RefreshCw,Package,Plus,Boxes,AlertTriangle,ShoppingCart,IndianRupee,Printer,Minus,Trash2} from "lucide-react";
+import {Search,RefreshCw,Package,Plus,Boxes,AlertTriangle,ShoppingCart,IndianRupee,Printer,Minus,Trash2,Mail,LockKeyhole,Eye,EyeOff,ArrowRight,Check,CalendarDays,Receipt,BarChart3,ShieldCheck,MonitorSmart,Headphones,Chrome} from "lucide-react";
 import "./styles.css";
-const supabase=createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY||import.meta.env.VITE_SUPABASE_ANON_KEY);
+const SUPABASE_URL="https://izqeunbudrfizzamslqs.supabase.co";\nconst SUPABASE_PUBLISHABLE_KEY="sb_publishable_ErxcEv-eqgwsKGqJNCeW0g_oU6OQCUK";\nconst supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const money=(m:number)=>"₹"+(m/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 const minor=(v:string)=>Math.round(Number(v||0)*100);
 type Product={id:string;name:string;sku:string|null;barcode:string|null;unit:string;cost_minor:number;selling_price_minor:number;tax_rate:number;is_active:boolean;category_id:string|null};
@@ -12,7 +12,8 @@ type Invoice={id:string;invoice_number:string;status:string;total_minor:number;p
 function AuthScreen({onSignedIn}:{onSignedIn:(user:any)=>void}){
  const [mode,setMode]=useState<"login"|"signup">("login");
  const [email,setEmail]=useState(""); const [password,setPassword]=useState("");
- const [salon,setSalon]=useState("GLAM360 Salon"); const [branch,setBranch]=useState("Main Branch");
+ const [salon,setSalon]=useState(""); const [branch,setBranch]=useState("");
+ const [showPassword,setShowPassword]=useState(false); const [remember,setRemember]=useState(true);
  const [busy,setBusy]=useState(false); const [msg,setMsg]=useState("");
  async function submit(e:any){
   e.preventDefault();setBusy(true);setMsg("");
@@ -20,23 +21,62 @@ function AuthScreen({onSignedIn}:{onSignedIn:(user:any)=>void}){
    const {data,error}=await supabase.auth.signInWithPassword({email,password});
    if(error)setMsg(error.message); else if(data.user)onSignedIn(data.user);
   }else{
+   if(!salon.trim()||!branch.trim()){setMsg("Salon name and first branch are required.");setBusy(false);return}
+   const slug=salon.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"salon";
    const {data,error}=await supabase.auth.signUp({email,password});
-   if(error){setMsg(error.message)}
+   if(error)setMsg(error.message);
    else if(data.user&&data.session){
-    const slug=salon.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"salon";
     const {error:oe}=await supabase.rpc("complete_organization_onboarding",{organization_name:salon,organization_slug:slug,first_branch_name:branch,first_service_name:"Haircut"});
     if(oe)setMsg(oe.message); else onSignedIn(data.user);
-   }else setMsg("Account created. Please confirm your email, then sign in.");
+   }else{
+    localStorage.setItem("glam360_pending_onboarding",JSON.stringify({salon,branch,slug}));
+    setMsg("Account created. Please confirm your email, then sign in.");
+    setMode("login");
+   }
   }
   setBusy(false);
  }
- return <div className="authPage"><div className="authCard"><div className="authLogo">G</div><p className="eyebrow">GLAM360 • SALON MANAGEMENT</p><h1>{mode==="login"?"Welcome back":"Create your salon account"}</h1><p className="muted">{mode==="login"?"Sign in to manage your salon securely.":"Start your GLAM360 workspace."}</p><form onSubmit={submit}>
-  {mode==="signup"&&<><label>Salon name<input value={salon} onChange={e=>setSalon(e.target.value)} required/></label><label>First branch<input value={branch} onChange={e=>setBranch(e.target.value)} required/></label></>}
-  <label>Email<input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="owner@example.com" required/></label>
-  <label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimum 6 characters" minLength={6} required/></label>
-  {msg&&<div className="authMsg">{msg}</div>}
-  <button className="primary authButton" disabled={busy}>{busy?"Please wait…":mode==="login"?"Sign In":"Create Account"}</button>
- </form><button className="linkButton" onClick={()=>{setMode(mode==="login"?"signup":"login");setMsg("")}}>{mode==="login"?"New to GLAM360? Create an account":"Already have an account? Sign in"}</button></div></div>
+ async function google(){
+  setMsg("");const {error}=await supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}});
+  if(error)setMsg(error.message);
+ }
+ async function forgot(){
+  if(!email){setMsg("Enter your email first.");return}
+  const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
+  setMsg(error?error.message:"Password reset link sent to your email.");
+ }
+ return <div className="authPage">
+  <div className="authShell">
+   <section className="authVisual">
+    <div className="visualOverlay"></div>
+    <div className="visualTop"><div className="visualBrand">GLAM<span>360</span></div><div className="visualSub">Salon Management</div></div>
+    <div className="visualCopy"><div className="goldLine"></div><h2>Beautiful<br/>Business<br/>Starts <span>Here.</span></h2><p>Manage&nbsp;&nbsp; | &nbsp;&nbsp;Grow&nbsp;&nbsp; | &nbsp;&nbsp;Delight</p></div>
+    <div className="visualBottom">
+      <div><CalendarDays/><span>Appointments</span></div><div><Receipt/><span>POS & Billing</span></div><div><Package/><span>Inventory</span></div><div><BarChart3/><span>Reports</span></div>
+    </div>
+   </section>
+   <section className="authPanel">
+    <div className="authTopLink">{mode==="login"?"New to GLAM360?":"Already have an account?"} <button onClick={()=>{setMode(mode==="login"?"signup":"login");setMsg("")}}>{mode==="login"?"Create an account":"Sign In"}</button></div>
+    <div className="authContent">
+      <p className="authKicker">GLAM360 • SALON MANAGEMENT</p>
+      <h1>{mode==="login"?"Welcome Back":"Create your salon account"}</h1>
+      <p className="authSubtitle">{mode==="login"?"Sign in to your salon management system":"Start your GLAM360 workspace."}</p>
+      <form onSubmit={submit} className="authForm">
+       {mode==="signup"&&<><label className="authField"><span>Salon name</span><div><Receipt/><input value={salon} onChange={e=>setSalon(e.target.value)} placeholder="Enter salon name" required/></div></label><label className="authField"><span>First branch</span><div><MonitorSmart/><input value={branch} onChange={e=>setBranch(e.target.value)} placeholder="Main Branch" required/></div></label></>}
+       <label className="authField"><span>Email</span><div><Mail/><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Enter your email" required/></div></label>
+       <label className="authField"><span>Password</span><div><LockKeyhole/><input type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="Enter your password" minLength={6} required/><button type="button" className="fieldIcon" onClick={()=>setShowPassword(v=>!v)}>{showPassword?<EyeOff/>:<Eye/>}</button></div></label>
+       {msg&&<div className="authMsg">{msg}</div>}
+       <div className="authOptions"><label className="remember"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)}/><span><Check/></span>Remember me</label><button type="button" className="forgot" onClick={forgot}>Forgot password?</button></div>
+       <button className="authPrimary" disabled={busy}>{busy?"Please wait…":mode==="login"?"Sign In":"Create Account"}<ArrowRight/></button>
+      </form>
+      <div className="authDivider"><span>or</span></div>
+      <button className="googleButton" onClick={google}><Chrome/>Continue with Google</button>
+      <div className="authBenefits"><div><ShieldCheck/><span>Secure & Reliable</span></div><div><MonitorSmart/><span>Access Anywhere</span></div><div><Headphones/><span>Dedicated Support</span></div></div>
+    </div>
+    <div className="authFooter"><span>© 2026 GLAM360. All rights reserved.</span><span>MORE THAN A SALON ♥</span></div>
+   </section>
+  </div>
+ </div>
 }
 function App({user}:{user:any}){
 const [page,setPage]=useState<"inventory"|"pos"|"sales">("inventory");
