@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useState} from "react";
 import {createRoot} from "react-dom/client";
 import {createClient} from "@supabase/supabase-js";
-import {Search,RefreshCw,Package,Plus,Boxes,AlertTriangle,ShoppingCart,IndianRupee,Printer,Minus,Trash2,Mail,LockKeyhole,Eye,EyeOff,ArrowRight,Check,CalendarDays,Receipt,BarChart3,ShieldCheck,MonitorSmart,Headphones,Chrome} from "lucide-react";
+import {Search,RefreshCw,Package,Plus,Boxes,AlertTriangle,ShoppingCart,IndianRupee,Printer,Minus,Trash2,Mail,LockKeyhole,Eye,EyeOff,ArrowRight,Check,CalendarDays,Receipt,BarChart3,ShieldCheck,MonitorSmart,Headphones} from "lucide-react";
 import "./styles.css";
 const SUPABASE_URL="https://izqeunbudrfizzamslqs.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_ErxcEv-eqgwsKGqJNCeW0g_oU6OQCUK";
@@ -72,7 +72,7 @@ function AuthScreen({onSignedIn}:{onSignedIn:(user:any)=>void}){
        <button className="authPrimary" disabled={busy}>{busy?"Please wait…":mode==="login"?"Sign In":"Create Account"}<ArrowRight/></button>
       </form>
       <div className="authDivider"><span>or</span></div>
-      <button className="googleButton" onClick={google}><Chrome/>Continue with Google</button>
+      <button className="googleButton" onClick={google}><span className="googleMark">G</span>Continue with Google</button>
       <div className="authBenefits"><div><ShieldCheck/><span>Secure & Reliable</span></div><div><MonitorSmart/><span>Access Anywhere</span></div><div><Headphones/><span>Dedicated Support</span></div></div>
     </div>
     <div className="authFooter"><span>© 2026 GLAM360. All rights reserved.</span><span>MORE THAN A SALON ♥</span></div>
